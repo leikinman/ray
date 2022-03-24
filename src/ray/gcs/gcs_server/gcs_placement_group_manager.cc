@@ -70,6 +70,14 @@ GcsPlacementGroup::GetUnplacedBundles() const {
   return unplaced_bundles;
 }
 
+std::vector<std::string> GcsPlacementGroup::GetSchedulingNodeIDs() const {
+  std::vector<std::string> node_ids;
+  for (int i = 0; i < placement_group_table_data_.node_ids_size(); i++) {
+    node_ids.push_back(placement_group_table_data_.node_ids(i));
+  }
+  return node_ids;
+}
+
 rpc::PlacementStrategy GcsPlacementGroup::GetStrategy() const {
   return placement_group_table_data_.strategy();
 }
@@ -82,7 +90,8 @@ const rpc::PlacementGroupTableData &GcsPlacementGroup::GetPlacementGroupTableDat
 std::string GcsPlacementGroup::DebugString() const {
   std::stringstream stream;
   stream << "placement group id = " << GetPlacementGroupID() << ", name = " << GetName()
-         << ", strategy = " << GetStrategy();
+         << ", strategy = " << GetStrategy()
+         << ", node ids size = " << placement_group_table_data_.node_ids_size();
   return stream.str();
 }
 

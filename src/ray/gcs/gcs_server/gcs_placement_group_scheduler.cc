@@ -88,17 +88,19 @@ ScheduleResult GcsScheduleStrategy::GenerateScheduleResult(
 
 ScheduleResult GcsStrictPackStrategy::Schedule(
     const std::vector<std::shared_ptr<const ray::BundleSpecification>> &bundles,
+    const std::vector<std::string> &node_ids,
     const std::unique_ptr<ScheduleContext> &context,
     GcsResourceScheduler &gcs_resource_scheduler) {
   const auto &required_resources = GetRequiredResourcesFromBundles(bundles);
   const auto &scheduling_result =
-      gcs_resource_scheduler.Schedule(required_resources, SchedulingType::STRICT_PACK);
+      gcs_resource_scheduler.Schedule(required_resources, SchedulingType::STRICT_PACK, node_ids);
   return GenerateScheduleResult(bundles, scheduling_result.second,
                                 scheduling_result.first);
 }
 
 ScheduleResult GcsPackStrategy::Schedule(
     const std::vector<std::shared_ptr<const ray::BundleSpecification>> &bundles,
+    const std::vector<std::string> &node_ids,
     const std::unique_ptr<ScheduleContext> &context,
     GcsResourceScheduler &gcs_resource_scheduler) {
   // The current algorithm is to select a node and deploy as many bundles as possible.
@@ -106,24 +108,26 @@ ScheduleResult GcsPackStrategy::Schedule(
   // TODO(ffbin): We will speed this up in next PR. Currently it is a double for loop.
   const auto &required_resources = GetRequiredResourcesFromBundles(bundles);
   const auto &scheduling_result =
-      gcs_resource_scheduler.Schedule(required_resources, SchedulingType::PACK);
+      gcs_resource_scheduler.Schedule(required_resources, SchedulingType::PACK, node_ids);
   return GenerateScheduleResult(bundles, scheduling_result.second,
                                 scheduling_result.first);
 }
 
 ScheduleResult GcsSpreadStrategy::Schedule(
     const std::vector<std::shared_ptr<const ray::BundleSpecification>> &bundles,
+    const std::vector<std::string> &node_ids,
     const std::unique_ptr<ScheduleContext> &context,
     GcsResourceScheduler &gcs_resource_scheduler) {
   const auto &required_resources = GetRequiredResourcesFromBundles(bundles);
   const auto &scheduling_result =
-      gcs_resource_scheduler.Schedule(required_resources, SchedulingType::SPREAD);
+      gcs_resource_scheduler.Schedule(required_resources, SchedulingType::SPREAD, node_ids);
   return GenerateScheduleResult(bundles, scheduling_result.second,
                                 scheduling_result.first);
 }
 
 ScheduleResult GcsStrictSpreadStrategy::Schedule(
     const std::vector<std::shared_ptr<const ray::BundleSpecification>> &bundles,
+    const std::vector<std::string> &node_ids,
     const std::unique_ptr<ScheduleContext> &context,
     GcsResourceScheduler &gcs_resource_scheduler) {
   // TODO(ffbin): A bundle may require special resources, such as GPU. We need to
@@ -141,7 +145,7 @@ ScheduleResult GcsStrictSpreadStrategy::Schedule(
 
   const auto &required_resources = GetRequiredResourcesFromBundles(bundles);
   const auto &scheduling_result = gcs_resource_scheduler.Schedule(
-      required_resources, SchedulingType::STRICT_SPREAD,
+      required_resources, SchedulingType::STRICT_SPREAD, node_ids, 
       /*node_filter_func=*/[&nodes_in_use](const NodeID &node_id) {
         return nodes_in_use.count(node_id) == 0;
       });
@@ -166,12 +170,14 @@ void GcsPlacementGroupScheduler::ScheduleUnplacedBundles(
 
   const auto &bundles = placement_group->GetUnplacedBundles();
   const auto &strategy = placement_group->GetStrategy();
+  const auto &node_ids = placement_group->GetSchedulingNodeIDs();
 
   RAY_LOG(DEBUG) << "Scheduling placement group " << placement_group->GetName()
                  << ", id: " << placement_group->GetPlacementGroupID()
-                 << ", bundles size = " << bundles.size();
+                 << ", bundles size = " << bundles.size()
+                 << ", node size = " << node_ids.size();
   auto scheduling_result = scheduler_strategies_[strategy]->Schedule(
-      bundles, GetScheduleContext(placement_group->GetPlacementGroupID()),
+      bundles, node_ids, GetScheduleContext(placement_group->GetPlacementGroupID()),
       gcs_resource_scheduler_);
 
   auto result_status = scheduling_result.first;

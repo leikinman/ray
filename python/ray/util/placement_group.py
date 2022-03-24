@@ -125,6 +125,7 @@ def _get_bundle_cache(pg_id: PlacementGroupID) -> List[Dict]:
 def placement_group(bundles: List[Dict[str, float]],
                     strategy: str = "PACK",
                     name: str = "",
+                    node_ids: List[str] = [],
                     lifetime=None) -> PlacementGroup:
     """Asynchronously creates a PlacementGroup.
 
@@ -182,7 +183,7 @@ def placement_group(bundles: List[Dict[str, float]],
                          " `None` or 'detached'")
 
     placement_group_id = worker.core_worker.create_placement_group(
-        name, bundles, strategy, detached)
+        name, bundles, strategy, detached, node_ids)
 
     return PlacementGroup(placement_group_id)
 

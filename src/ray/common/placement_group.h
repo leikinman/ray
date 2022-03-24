@@ -69,7 +69,8 @@ class PlacementGroupSpecBuilder {
       const std::vector<std::unordered_map<std::string, double>> &bundles,
       const rpc::PlacementStrategy strategy, const bool is_detached,
       const JobID &creator_job_id, const ActorID &creator_actor_id,
-      bool is_creator_detached_actor) {
+      bool is_creator_detached_actor,
+      const std::vector<std::string> &node_ids) {
     message_->set_placement_group_id(placement_group_id.Binary());
     message_->set_name(name);
     message_->set_strategy(strategy);
@@ -101,6 +102,10 @@ class PlacementGroupSpecBuilder {
           mutable_unit_resources->insert({current->first, current->second});
         }
       }
+    }
+
+    for (size_t i = 0; i < node_ids.size(); i++) {
+      message_->add_node_ids(node_ids[i]);
     }
     return *this;
   }

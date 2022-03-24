@@ -584,5 +584,7 @@ message PlacementGroupTableData {
   // The placement group's stats / information such as when it is created or
   // what's the current scheduling state.
   PlacementGroupStats stats = 12;
+  // The node_ids to schedule
+  repeated string node_ids = 13;
 }
 ///////////////////////////////////////////////////////////////////////////////

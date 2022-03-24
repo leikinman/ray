@@ -280,7 +280,8 @@ cdef extern from "ray/core_worker/common.h" nogil:
             const c_string &name,
             CPlacementStrategy strategy,
             const c_vector[unordered_map[c_string, double]] &bundles,
-            c_bool is_detached
+            c_bool is_detached,
+            const c_vector[c_string] &node_ids
         )
 
     cdef cppclass CObjectLocation "ray::core::ObjectLocation":

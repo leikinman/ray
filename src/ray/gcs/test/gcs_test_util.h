@@ -126,7 +126,7 @@ struct Mocker {
     auto placement_group_id = PlacementGroupID::FromRandom();
     builder.SetPlacementGroupSpec(placement_group_id, name, bundles, strategy,
                                   /* is_detached */ false, job_id, actor_id,
-                                  /* is_creator_detached */ false);
+                                  /* is_creator_detached */ false, std::vector<std::string>{});
     return builder.Build();
   }
 

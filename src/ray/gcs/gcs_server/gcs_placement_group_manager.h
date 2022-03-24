@@ -71,6 +71,8 @@ class GcsPlacementGroup {
         placement_group_spec.creator_actor_dead());
     placement_group_table_data_.set_is_detached(placement_group_spec.is_detached());
     placement_group_table_data_.set_ray_namespace(ray_namespace);
+    placement_group_table_data_.mutable_node_ids()->CopyFrom(
+      placement_group_spec.node_ids());
     SetupStates();
   }
 
@@ -100,6 +102,8 @@ class GcsPlacementGroup {
 
   /// Get the unplaced bundles of this placement group.
   std::vector<std::shared_ptr<const BundleSpecification>> GetUnplacedBundles() const;
+
+  std::vector<std::string> GetSchedulingNodeIDs() const;
 
   /// Get the Strategy
   rpc::PlacementStrategy GetStrategy() const;

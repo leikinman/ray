@@ -69,9 +69,14 @@ double LeastResourceScorer::Calculate(const FixedPoint &requested,
 SchedulingResult GcsResourceScheduler::Schedule(
     const std::vector<ResourceSet> &required_resources_list,
     const SchedulingType &scheduling_type,
+    const std::vector<std::string> &node_ids,
     const std::function<bool(const NodeID &)> &node_filter_func) {
   const auto &cluster_resources = gcs_resource_manager_.GetClusterResources();
-
+  std::vector<NodeID> force_node_ids;
+  for (auto node_id: node_ids) {
+    NodeID _node_id = NodeID::FromBinary(NodeID::FromHex(node_id).Binary());
+    force_node_ids.push_back(_node_id);
+  }
   // Filter candidate nodes.
   absl::flat_hash_set<NodeID> candidate_nodes =
       FilterCandidateNodes(cluster_resources, node_filter_func);
@@ -94,7 +99,7 @@ SchedulingResult GcsResourceScheduler::Schedule(
     result = StrictSpreadSchedule(to_schedule_resources, candidate_nodes);
     break;
   case PACK:
-    result = PackSchedule(to_schedule_resources, candidate_nodes);
+    result = PackSchedule(to_schedule_resources, candidate_nodes, force_node_ids);
     break;
   case STRICT_PACK:
     result = StrictPackSchedule(to_schedule_resources, candidate_nodes);
@@ -245,7 +250,8 @@ SchedulingResult GcsResourceScheduler::StrictPackSchedule(
 
 SchedulingResult GcsResourceScheduler::PackSchedule(
     const std::vector<ResourceSet> &required_resources_list,
-    const absl::flat_hash_set<NodeID> &candidate_nodes) {
+    const absl::flat_hash_set<NodeID> &candidate_nodes,
+    const std::vector<NodeID> &force_node_ids) {
   std::vector<NodeID> result_nodes;
   result_nodes.resize(required_resources_list.size());
   absl::flat_hash_set<NodeID> candidate_nodes_copy(candidate_nodes);
@@ -254,31 +260,51 @@ SchedulingResult GcsResourceScheduler::PackSchedule(
   for (const auto &iter : required_resources_list) {
     required_resources_list_copy.emplace_back(index++, iter);
   }
+  // RAY_LOG(ERROR) << "force_node_ids size is " << force_node_ids.size();
 
-  while (!required_resources_list_copy.empty()) {
-    const auto &required_resources_index = required_resources_list_copy.front().first;
-    const auto &required_resources = required_resources_list_copy.front().second;
-    auto best_node = GetBestNode(required_resources, candidate_nodes_copy);
-    if (!best_node) {
-      // There is no node to meet the scheduling requirements.
-      break;
-    }
-
-    RAY_CHECK(gcs_resource_manager_.AcquireResources(*best_node, required_resources));
-    result_nodes[required_resources_index] = *best_node;
-    required_resources_list_copy.pop_front();
-
-    // We try to schedule more resources on one node.
-    for (auto iter = required_resources_list_copy.begin();
-         iter != required_resources_list_copy.end();) {
-      if (gcs_resource_manager_.AcquireResources(*best_node, iter->second)) {
-        result_nodes[iter->first] = *best_node;
-        required_resources_list_copy.erase(iter++);
-      } else {
-        ++iter;
+  // soft force assignment
+  if (force_node_ids.size() != 0) {
+    for (auto node_id: force_node_ids) {
+      // RAY_LOG(ERROR) << node_id;
+      const auto &required_resources_index = required_resources_list_copy.front().first;
+      const auto &required_resources = required_resources_list_copy.front().second;
+      absl::flat_hash_set<NodeID> _candidate_node;
+      _candidate_node.emplace(node_id);
+      auto best_node = GetBestNode(required_resources, _candidate_node);
+      if (!best_node) {
+        // There is no node to meet the scheduling requirements.
+        break;
       }
+      RAY_CHECK(gcs_resource_manager_.AcquireResources(node_id, required_resources));
+      result_nodes[required_resources_index] = node_id;
+      required_resources_list_copy.pop_front();
     }
-    candidate_nodes_copy.erase(*best_node);
+  } else {
+    while (!required_resources_list_copy.empty()) {
+      const auto &required_resources_index = required_resources_list_copy.front().first;
+      const auto &required_resources = required_resources_list_copy.front().second;
+      auto best_node = GetBestNode(required_resources, candidate_nodes_copy);
+      if (!best_node) {
+        // There is no node to meet the scheduling requirements.
+        break;
+      }
+
+      RAY_CHECK(gcs_resource_manager_.AcquireResources(*best_node, required_resources));
+      result_nodes[required_resources_index] = *best_node;
+      required_resources_list_copy.pop_front();
+
+      // We try to schedule more resources on one node.
+      for (auto iter = required_resources_list_copy.begin();
+          iter != required_resources_list_copy.end();) {
+        if (gcs_resource_manager_.AcquireResources(*best_node, iter->second)) {
+          result_nodes[iter->first] = *best_node;
+          required_resources_list_copy.erase(iter++);
+        } else {
+          ++iter;
+        }
+      }
+      candidate_nodes_copy.erase(*best_node);
+    }
   }
 
   // Releasing the resources temporarily deducted from `gcs_resource_manager_`.

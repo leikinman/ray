@@ -257,6 +257,7 @@ class TrialRunner:
             trial_executor=None,
             callbacks=None,
             metric=None,
+            stopping_criteria=None,
             # Deprecate on next refactor
             driver_sync_trial_checkpoints=False):
         self._search_alg = search_alg or BasicVariantGenerator()
@@ -294,6 +295,7 @@ class TrialRunner:
         self.trial_executor.set_max_pending_trials(self._max_pending_trials)
 
         self._metric = metric
+        self._stopping_criteria = stopping_criteria
 
         if "TRIALRUNNER_WALLTIME_LIMIT" in os.environ:
             raise ValueError(

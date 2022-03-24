@@ -162,6 +162,16 @@ struct PlacementGroupCreationOptions {
         bundles(std::move(bundles)),
         is_detached(is_detached) {}
 
+  PlacementGroupCreationOptions(
+      std::string name, PlacementStrategy strategy,
+      std::vector<std::unordered_map<std::string, double>> bundles, bool is_detached,
+      std::vector<std::string> node_ids)
+      : name(std::move(name)),
+        strategy(strategy),
+        bundles(std::move(bundles)),
+        is_detached(is_detached),
+        node_ids(node_ids) {}
+
   /// The name of the placement group.
   const std::string name;
   /// The strategy to place the bundle in Placement Group.
@@ -170,6 +180,8 @@ struct PlacementGroupCreationOptions {
   const std::vector<std::unordered_map<std::string, double>> bundles;
   /// Whether to keep the placement group persistent after its creator dead.
   const bool is_detached = false;
+  /// force to schedule according this address list
+  const std::vector<std::string> node_ids = std::vector<std::string> {};
 };
 
 class ObjectLocation {

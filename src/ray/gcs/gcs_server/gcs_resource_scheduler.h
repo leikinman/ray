@@ -104,6 +104,7 @@ class GcsResourceScheduler {
   SchedulingResult Schedule(
       const std::vector<ResourceSet> &required_resources_list,
       const SchedulingType &scheduling_type,
+      const std::vector<std::string> &node_ids = std::vector<std::string> {},
       const std::function<bool(const NodeID &)> &node_filter_func = nullptr);
 
  private:
@@ -167,7 +168,8 @@ class GcsResourceScheduler {
   /// otherwise, it will return an empty vector and a flag to indicate whether this
   /// request can be retry or not.
   SchedulingResult PackSchedule(const std::vector<ResourceSet> &required_resources_list,
-                                const absl::flat_hash_set<NodeID> &candidate_nodes);
+                                const absl::flat_hash_set<NodeID> &candidate_nodes,
+                                const std::vector<NodeID> &node_ids);
 
   /// Score all nodes according to the specified resources.
   ///

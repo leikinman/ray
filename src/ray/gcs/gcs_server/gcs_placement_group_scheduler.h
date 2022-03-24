@@ -120,6 +120,7 @@ class GcsScheduleStrategy {
   virtual ~GcsScheduleStrategy() {}
   virtual ScheduleResult Schedule(
       const std::vector<std::shared_ptr<const ray::BundleSpecification>> &bundles,
+      const std::vector<std::string> &node_ids,
       const std::unique_ptr<ScheduleContext> &context,
       GcsResourceScheduler &gcs_resource_scheduler) = 0;
 
@@ -149,6 +150,7 @@ class GcsPackStrategy : public GcsScheduleStrategy {
  public:
   ScheduleResult Schedule(
       const std::vector<std::shared_ptr<const ray::BundleSpecification>> &bundles,
+      const std::vector<std::string> &node_ids,
       const std::unique_ptr<ScheduleContext> &context,
       GcsResourceScheduler &gcs_resource_scheduler) override;
 };
@@ -158,6 +160,7 @@ class GcsSpreadStrategy : public GcsScheduleStrategy {
  public:
   ScheduleResult Schedule(
       const std::vector<std::shared_ptr<const ray::BundleSpecification>> &bundles,
+      const std::vector<std::string> &node_ids,
       const std::unique_ptr<ScheduleContext> &context,
       GcsResourceScheduler &gcs_resource_scheduler) override;
 };
@@ -168,6 +171,7 @@ class GcsStrictPackStrategy : public GcsScheduleStrategy {
  public:
   ScheduleResult Schedule(
       const std::vector<std::shared_ptr<const ray::BundleSpecification>> &bundles,
+      const std::vector<std::string> &node_ids,
       const std::unique_ptr<ScheduleContext> &context,
       GcsResourceScheduler &gcs_resource_scheduler) override;
 };
@@ -179,6 +183,7 @@ class GcsStrictSpreadStrategy : public GcsScheduleStrategy {
  public:
   ScheduleResult Schedule(
       const std::vector<std::shared_ptr<const ray::BundleSpecification>> &bundles,
+      const std::vector<std::string> &node_ids,
       const std::unique_ptr<ScheduleContext> &context,
       GcsResourceScheduler &gcs_resource_scheduler) override;
 };
